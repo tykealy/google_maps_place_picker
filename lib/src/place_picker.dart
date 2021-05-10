@@ -9,6 +9,7 @@ import 'package:google_maps_place_picker/providers/place_provider.dart';
 import 'package:google_maps_place_picker/src/autocomplete_search.dart';
 import 'package:google_maps_place_picker/src/controllers/autocomplete_search_controller.dart';
 import 'package:google_maps_place_picker/src/google_map_place_picker.dart';
+import 'package:google_maps_place_picker/src/models/map_icon_position.dart';
 import 'package:google_maps_place_picker/src/utils/uuid.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:http/http.dart';
@@ -61,6 +62,11 @@ class PlacePicker extends StatefulWidget {
     this.automaticallyImplyAppBarLeading = true,
     this.autocompleteOnTrailingWhitespace = false,
     this.hidePlaceDetailsWhenDraggingPin = true,
+    this.backgroundAppBarColor = Colors.transparent,
+    this.customTextField,
+    required this.searchController,
+    this.mapIconPosition,
+    this.onPicked,
   }) : super(key: key);
 
   final String apiKey;
@@ -96,6 +102,12 @@ class PlacePicker extends StatefulWidget {
   final List<Component>? autocompleteComponents;
   final bool? strictbounds;
   final String? region;
+
+  final Color? backgroundAppBarColor;
+  final Widget? customTextField;
+  final TextEditingController searchController;
+  final MapIconPosition? mapIconPosition;
+  final Function()? onPicked;
 
   /// If true the [body] and the scaffold's floating widgets should size
   /// themselves to avoid the onscreen keyboard whose height is defined by the
@@ -231,7 +243,7 @@ class _PlacePickerState extends State<PlacePicker> {
                   automaticallyImplyLeading: false,
                   iconTheme: Theme.of(context).iconTheme,
                   elevation: 0,
-                  backgroundColor: Colors.transparent,
+                  backgroundColor: widget.backgroundAppBarColor,
                   titleSpacing: 0.0,
                   title: _buildSearchBar(context),
                 ),
@@ -283,30 +295,36 @@ class _PlacePickerState extends State<PlacePicker> {
             : SizedBox(width: 15),
         Expanded(
           child: AutoCompleteSearch(
-              appBarKey: appBarKey,
-              searchBarController: searchBarController,
-              sessionToken: provider!.sessionToken,
-              hintText: widget.hintText,
-              searchingText: widget.searchingText,
-              debounceMilliseconds: widget.autoCompleteDebounceInMilliseconds,
-              onPicked: (prediction) {
-                _pickPrediction(prediction);
-              },
-              onSearchFailed: (status) {
-                if (widget.onAutoCompleteFailed != null) {
-                  widget.onAutoCompleteFailed!(status);
-                }
-              },
-              autocompleteOffset: widget.autocompleteOffset,
-              autocompleteRadius: widget.autocompleteRadius,
-              autocompleteLanguage: widget.autocompleteLanguage,
-              autocompleteComponents: widget.autocompleteComponents,
-              autocompleteTypes: widget.autocompleteTypes,
-              strictbounds: widget.strictbounds,
-              region: widget.region,
-              initialSearchString: widget.initialSearchString,
-              searchForInitialValue: widget.searchForInitialValue,
-              autocompleteOnTrailingWhitespace: widget.autocompleteOnTrailingWhitespace),
+            searchController: widget.searchController,
+            appBarKey: appBarKey,
+            searchBarController: searchBarController,
+            sessionToken: provider!.sessionToken,
+            hintText: widget.hintText,
+            searchingText: widget.searchingText,
+            debounceMilliseconds: widget.autoCompleteDebounceInMilliseconds,
+            onPicked: (prediction) {
+              _pickPrediction(prediction);
+              if (widget.onPicked != null) {
+                widget.onPicked!();
+              }
+            },
+            onSearchFailed: (status) {
+              if (widget.onAutoCompleteFailed != null) {
+                widget.onAutoCompleteFailed!(status);
+              }
+            },
+            autocompleteOffset: widget.autocompleteOffset,
+            autocompleteRadius: widget.autocompleteRadius,
+            autocompleteLanguage: widget.autocompleteLanguage,
+            autocompleteComponents: widget.autocompleteComponents,
+            autocompleteTypes: widget.autocompleteTypes,
+            strictbounds: widget.strictbounds,
+            region: widget.region,
+            initialSearchString: widget.initialSearchString,
+            searchForInitialValue: widget.searchForInitialValue,
+            autocompleteOnTrailingWhitespace: widget.autocompleteOnTrailingWhitespace,
+            customTextField: widget.customTextField,
+          ),
         ),
         SizedBox(width: 5),
       ],
@@ -336,7 +354,10 @@ class _PlacePickerState extends State<PlacePicker> {
 
     await _moveTo(provider!.selectedPlace!.geometry!.location.lat, provider!.selectedPlace!.geometry!.location.lng);
 
-    provider!.placeSearchingState = SearchingState.Idle;
+    Future.delayed(
+      Duration(milliseconds: 500),
+      () => provider!.placeSearchingState = SearchingState.Idle,
+    );
   }
 
   _moveTo(double latitude, double longitude) async {
@@ -423,6 +444,7 @@ class _PlacePickerState extends State<PlacePicker> {
         searchBarController.reset();
       },
       onPlacePicked: widget.onPlacePicked,
+      mapIconPosition: widget.mapIconPosition,
     );
   }
 }

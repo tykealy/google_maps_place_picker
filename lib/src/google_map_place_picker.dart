@@ -10,6 +10,7 @@ import 'package:google_maps_place_picker/google_maps_place_picker.dart';
 import 'package:google_maps_place_picker/providers/place_provider.dart';
 import 'package:google_maps_place_picker/src/components/animated_pin.dart';
 import 'package:google_maps_place_picker/src/components/floating_card.dart';
+import 'package:google_maps_place_picker/src/models/map_icon_position.dart';
 import 'package:google_maps_place_picker/src/place_picker.dart';
 import 'package:google_maps_webservice/geocoding.dart';
 import 'package:google_maps_webservice/places.dart';
@@ -50,6 +51,7 @@ class GoogleMapPlacePicker extends StatelessWidget {
     this.language,
     this.forceSearchOnZoomChanged,
     this.hidePlaceDetailsWhenDraggingPin,
+    this.mapIconPosition,
   }) : super(key: key);
 
   final LatLng initialTarget;
@@ -78,10 +80,13 @@ class GoogleMapPlacePicker extends StatelessWidget {
 
   final bool? forceSearchOnZoomChanged;
   final bool? hidePlaceDetailsWhenDraggingPin;
+  final MapIconPosition? mapIconPosition;
 
   _searchByCameraLocation(PlaceProvider provider) async {
     // We don't want to search location again if camera location is changed by zooming in/out.
-    bool hasZoomChanged = provider.cameraPosition != null && provider.prevCameraPosition != null && provider.cameraPosition!.zoom != provider.prevCameraPosition!.zoom;
+    bool hasZoomChanged = provider.cameraPosition != null &&
+        provider.prevCameraPosition != null &&
+        provider.cameraPosition!.zoom != provider.prevCameraPosition!.zoom;
 
     if (forceSearchOnZoomChanged == false && hasZoomChanged) {
       provider.placeSearchingState = SearchingState.Idle;
@@ -284,15 +289,20 @@ class GoogleMapPlacePicker extends StatelessWidget {
 
   Widget _buildFloatingCard() {
     return Selector<PlaceProvider, Tuple4<PickResult?, SearchingState, bool, PinState>>(
-      selector: (_, provider) => Tuple4(provider.selectedPlace, provider.placeSearchingState, provider.isSearchBarFocused, provider.pinState),
+      selector: (_, provider) =>
+          Tuple4(provider.selectedPlace, provider.placeSearchingState, provider.isSearchBarFocused, provider.pinState),
       builder: (context, data, __) {
-        if ((data.item1 == null && data.item2 == SearchingState.Idle) || data.item3 == true || data.item4 == PinState.Dragging && this.hidePlaceDetailsWhenDraggingPin!) {
+        if ((data.item1 == null && data.item2 == SearchingState.Idle) ||
+            data.item3 == true ||
+            data.item4 == PinState.Dragging && this.hidePlaceDetailsWhenDraggingPin!) {
           return Container();
         } else {
           if (selectedPlaceWidgetBuilder == null) {
             return _defaultPlaceWidgetBuilder(context, data.item1, data.item2);
           } else {
-            return Builder(builder: (builderContext) => selectedPlaceWidgetBuilder!(builderContext, data.item1, data.item2, data.item3));
+            return Builder(
+                builder: (builderContext) =>
+                    selectedPlaceWidgetBuilder!(builderContext, data.item1, data.item2, data.item3));
           }
         }
       },
@@ -358,8 +368,10 @@ class GoogleMapPlacePicker extends StatelessWidget {
     final RenderBox appBarRenderBox = appBarKey.currentContext!.findRenderObject() as RenderBox;
 
     return Positioned(
-      top: appBarRenderBox.size.height,
-      right: 15,
+      top: mapIconPosition?.top ?? appBarRenderBox.size.height,
+      right: mapIconPosition?.right ?? 15,
+      left: mapIconPosition?.left,
+      bottom: mapIconPosition?.bottom,
       child: Column(
         children: <Widget>[
           enableMapTypeButton!
