@@ -11,29 +11,31 @@ import 'package:google_maps_webservice/places.dart';
 import 'package:provider/provider.dart';
 
 class AutoCompleteSearch extends StatefulWidget {
-  const AutoCompleteSearch(
-      {Key? key,
-      required this.sessionToken,
-      required this.onPicked,
-      required this.appBarKey,
-      this.hintText,
-      this.searchingText = "Searching...",
-      this.height = 40,
-      this.contentPadding = EdgeInsets.zero,
-      this.debounceMilliseconds,
-      this.onSearchFailed,
-      required this.searchBarController,
-      this.autocompleteOffset,
-      this.autocompleteRadius,
-      this.autocompleteLanguage,
-      this.autocompleteComponents,
-      this.autocompleteTypes,
-      this.strictbounds,
-      this.region,
-      this.initialSearchString,
-      this.searchForInitialValue,
-      this.autocompleteOnTrailingWhitespace})
-      : assert(searchBarController != null),
+  const AutoCompleteSearch({
+    Key? key,
+    required this.sessionToken,
+    required this.onPicked,
+    required this.appBarKey,
+    this.hintText,
+    this.searchingText = "Searching...",
+    this.height = 40,
+    this.contentPadding = EdgeInsets.zero,
+    this.debounceMilliseconds,
+    this.onSearchFailed,
+    required this.searchBarController,
+    this.autocompleteOffset,
+    this.autocompleteRadius,
+    this.autocompleteLanguage,
+    this.autocompleteComponents,
+    this.autocompleteTypes,
+    this.strictbounds,
+    this.region,
+    this.initialSearchString,
+    this.searchForInitialValue,
+    this.autocompleteOnTrailingWhitespace,
+    this.customTextField,
+    required this.searchController,
+  })   : assert(searchBarController != null),
         super(key: key);
 
   final String? sessionToken;
@@ -56,13 +58,15 @@ class AutoCompleteSearch extends StatefulWidget {
   final String? initialSearchString;
   final bool? searchForInitialValue;
   final bool? autocompleteOnTrailingWhitespace;
+  final Widget? customTextField;
+  final TextEditingController searchController;
 
   @override
   AutoCompleteSearchState createState() => AutoCompleteSearchState();
 }
 
 class AutoCompleteSearchState extends State<AutoCompleteSearch> {
-  TextEditingController controller = TextEditingController();
+  // TextEditingController controller = TextEditingController();
   FocusNode focus = FocusNode();
   OverlayEntry? overlayEntry;
   SearchProvider provider = SearchProvider();
@@ -72,13 +76,13 @@ class AutoCompleteSearchState extends State<AutoCompleteSearch> {
     super.initState();
     if (widget.initialSearchString != null) {
       WidgetsBinding.instance!.addPostFrameCallback((_) {
-        controller.text = widget.initialSearchString!;
+        widget.searchController.text = widget.initialSearchString!;
         if (widget.searchForInitialValue!) {
           _onSearchInputChange();
         }
       });
     }
-    controller.addListener(_onSearchInputChange);
+    widget.searchController.addListener(_onSearchInputChange);
     focus.addListener(_onFocusChanged);
 
     widget.searchBarController.attach(this);
@@ -86,8 +90,8 @@ class AutoCompleteSearchState extends State<AutoCompleteSearch> {
 
   @override
   void dispose() {
-    controller.removeListener(_onSearchInputChange);
-    controller.dispose();
+    // widget.searchController.removeListener(_onSearchInputChange);
+    // widget.searchController.dispose();
 
     focus.removeListener(_onFocusChanged);
     focus.dispose();
@@ -100,28 +104,29 @@ class AutoCompleteSearchState extends State<AutoCompleteSearch> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: provider,
-      child: RoundedFrame(
-        height: widget.height,
-        padding: const EdgeInsets.only(right: 10),
-        color: Theme.of(context).brightness == Brightness.dark ? Colors.black54 : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        elevation: 8.0,
-        child: Row(
-          children: <Widget>[
-            SizedBox(width: 10),
-            Icon(Icons.search),
-            SizedBox(width: 10),
-            Expanded(child: _buildSearchTextField()),
-            _buildTextClearIcon(),
-          ],
-        ),
-      ),
+      child: widget.customTextField ??
+          RoundedFrame(
+            height: widget.height,
+            padding: const EdgeInsets.only(right: 10),
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.black54 : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            elevation: 8.0,
+            child: Row(
+              children: <Widget>[
+                SizedBox(width: 10),
+                Icon(Icons.search),
+                SizedBox(width: 10),
+                Expanded(child: _buildSearchTextField()),
+                _buildTextClearIcon(),
+              ],
+            ),
+          ),
     );
   }
 
   Widget _buildSearchTextField() {
     return TextField(
-      controller: controller,
+      controller: widget.searchController,
       focusNode: focus,
       decoration: InputDecoration(
         hintText: widget.hintText,
@@ -157,22 +162,23 @@ class AutoCompleteSearchState extends State<AutoCompleteSearch> {
 
   _onSearchInputChange() {
     if (!mounted) return;
-    this.provider.searchTerm = controller.text;
+    this.provider.searchTerm = widget.searchController.text;
 
     PlaceProvider provider = PlaceProvider.of(context, listen: false);
 
-    if (controller.text.isEmpty) {
+    if (widget.searchController.text.isEmpty) {
       provider.debounceTimer?.cancel();
-      _searchPlace(controller.text);
+      _searchPlace(widget.searchController.text);
       return;
     }
 
-    if (controller.text.trim() == this.provider.prevSearchTerm.trim()) {
+    if (widget.searchController.text.trim() == this.provider.prevSearchTerm.trim()) {
       provider.debounceTimer?.cancel();
       return;
     }
 
-    if (!widget.autocompleteOnTrailingWhitespace! && controller.text.substring(controller.text.length - 1) == " ") {
+    if (!widget.autocompleteOnTrailingWhitespace! &&
+        widget.searchController.text.substring(widget.searchController.text.length - 1) == " ") {
       provider.debounceTimer?.cancel();
       return;
     }
@@ -182,7 +188,7 @@ class AutoCompleteSearchState extends State<AutoCompleteSearch> {
     }
 
     provider.debounceTimer = Timer(Duration(milliseconds: widget.debounceMilliseconds!), () {
-      _searchPlace(controller.text.trim());
+      _searchPlace(widget.searchController.text.trim());
     });
   }
 
@@ -280,7 +286,9 @@ class AutoCompleteSearchState extends State<AutoCompleteSearch> {
       final PlacesAutocompleteResponse response = await provider.places.autocomplete(
         searchTerm,
         sessionToken: widget.sessionToken,
-        location: provider.currentPosition == null ? null : Location(lat: provider.currentPosition!.latitude, lng: provider.currentPosition!.longitude),
+        location: provider.currentPosition == null
+            ? null
+            : Location(lat: provider.currentPosition!.latitude, lng: provider.currentPosition!.longitude),
         offset: widget.autocompleteOffset,
         radius: widget.autocompleteRadius,
         language: widget.autocompleteLanguage,
@@ -303,7 +311,7 @@ class AutoCompleteSearchState extends State<AutoCompleteSearch> {
 
   clearText() {
     provider.searchTerm = "";
-    controller.clear();
+    widget.searchController.clear();
   }
 
   resetSearchBar() {
