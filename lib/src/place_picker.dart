@@ -65,8 +65,11 @@ class PlacePicker extends StatefulWidget {
     this.backgroundAppBarColor = Colors.transparent,
     this.customTextField,
     required this.searchController,
-    this.mapIconPosition,
     this.onPicked,
+    this.animateZoom = 16,
+    this.defaultZoom = 15,
+    this.showCurrentLocationIcon = false,
+    this.customLocationButton,
   }) : super(key: key);
 
   final String apiKey;
@@ -106,8 +109,11 @@ class PlacePicker extends StatefulWidget {
   final Color? backgroundAppBarColor;
   final Widget? customTextField;
   final TextEditingController searchController;
-  final MapIconPosition? mapIconPosition;
   final Function()? onPicked;
+  final double? animateZoom;
+  final double? defaultZoom;
+  final bool? showCurrentLocationIcon;
+  final Widget? customLocationButton;
 
   /// If true the [body] and the scaffold's floating widgets should size
   /// themselves to avoid the onscreen keyboard whose height is defined by the
@@ -368,7 +374,7 @@ class _PlacePickerState extends State<PlacePicker> {
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(latitude, longitude),
-          zoom: 16,
+          zoom: widget.animateZoom!,
         ),
       ),
     );
@@ -429,6 +435,9 @@ class _PlacePickerState extends State<PlacePicker> {
       onToggleMapType: () {
         provider!.switchMapType();
       },
+      defaultZoom: widget.defaultZoom,
+      showCurrentLocationIcon: widget.showCurrentLocationIcon,
+      customLocationButton: widget.customLocationButton,
       onMyLocation: () async {
         // Prevent to click many times in short period.
         if (provider!.isOnUpdateLocationCooldown == false) {
@@ -444,7 +453,6 @@ class _PlacePickerState extends State<PlacePicker> {
         searchBarController.reset();
       },
       onPlacePicked: widget.onPlacePicked,
-      mapIconPosition: widget.mapIconPosition,
     );
   }
 }
