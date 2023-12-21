@@ -128,7 +128,7 @@ class PlaceProvider extends ChangeNotifier {
     if (notify) notifyListeners();
   }
 
-  switchMapType() {
+  switchMapType() async {
     _mapType = MapType.values[(_mapType.index + 1) % MapType.values.length];
     if (_mapType == MapType.none) _mapType = MapType.normal;
 
