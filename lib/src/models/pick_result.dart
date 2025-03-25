@@ -1,4 +1,4 @@
-import 'package:google_maps_webservice/geocoding.dart';
+import "package:flutter_google_maps_webservices/geocoding.dart";
 import 'package:google_maps_webservice/places.dart';
 
 class PickResult {

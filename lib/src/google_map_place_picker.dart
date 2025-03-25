@@ -12,7 +12,7 @@ import 'package:google_maps_place_picker/src/components/animated_pin.dart';
 import 'package:google_maps_place_picker/src/components/floating_card.dart';
 import 'package:google_maps_place_picker/src/models/map_icon_position.dart';
 import 'package:google_maps_place_picker/src/place_picker.dart';
-import 'package:google_maps_webservice/geocoding.dart';
+import "package:flutter_google_maps_webservices/geocoding.dart";
 import 'package:google_maps_webservice/places.dart';
 import 'package:provider/provider.dart';
 import 'package:tuple/tuple.dart';
