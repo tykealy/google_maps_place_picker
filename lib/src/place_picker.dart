@@ -11,7 +11,7 @@ import 'package:google_maps_place_picker/src/controllers/autocomplete_search_con
 import 'package:google_maps_place_picker/src/google_map_place_picker.dart';
 import 'package:google_maps_place_picker/src/models/map_icon_position.dart';
 import 'package:google_maps_place_picker/src/utils/uuid.dart';
-import 'package:google_maps_webservice/places.dart';
+import 'package:flutter_google_maps_webservices/places.dart';
 import 'package:http/http.dart';
 import 'package:provider/provider.dart';
 import 'dart:io' show Platform;
